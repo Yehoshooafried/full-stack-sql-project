@@ -10,6 +10,7 @@ const cors = require("cors");
 // const { send } = require('process');
 
 
+//-allow-credentials
 const corsOptions = {
     origin: '*',
     credentials: true,            //access-control-allow-credentials:true
@@ -26,12 +27,12 @@ const con = mysql.createConnection(
     {
         host: "localhost",
         user: "root",
-        password: "1234Myjbh!",
+        password: "4165Mysql!",
         database: 'todos'
     }
 );
 
-
+// get first data
 app.get('/', (req, res) => {
     con.connect((err) => {
         if (err) return err;
@@ -53,10 +54,6 @@ app.get('/', (req, res) => {
 // authentication
 app.get('/check/:username/:password', (req, res) => {  // readFiles,
 
-    // check commands
-    // console.log(req.params.username);
-    // console.log(req.params.password);
-
     const name = req.params.username
     const password = req.params.password
     con.connect((err) => {
@@ -73,23 +70,25 @@ app.get('/check/:username/:password', (req, res) => {  // readFiles,
     })
     console.log('check3');
 })
-app.get('/todos/:username', (req, res) => {  // readFiles,
 
-    // check commands
-    // console.log(req.params.username);
-    // console.log(req.params.password);
+// get todo/ posts table
+app.get('/:table/:userId', (req, res) => {  // readFiles,
 
-    const name = req.params.username
+    const { userId, table } = req.params
+    if (table = 'todos') {
+        const colunmName = 'userid'
+    }
+    if (table = 'posts') {
+        const colunmName = 'posts'
+    }
 
     con.connect((err) => {
         if (err) return err;
         console.log("connected succes");
         const sql =
-            `SELECT  t.userId, t.id, t.title, t.completed 
-            FROM users 
-              JOIN todos t 
-              ON users.id = t.userId 
-               AND username = '${name}' `;
+            `SELECT *
+            FROM ${table} 
+             WHERE ${colunmName} = '${userId}' `;
 
         con.query(sql, (err, result) => {
             if (err) { console.log('bad authentication'); return res.send(JSON.stringify(err)); }
@@ -101,27 +100,97 @@ app.get('/todos/:username', (req, res) => {  // readFiles,
     console.log('check3');
 })
 
-//update completed
-app.post('/todos/completed', (req, res) => {
-const {todoId,status} = req.body
-console.log(req.body);
+// get comments
+app.get('/comments/:postid', (req, res) => {  // readFiles,
+    const postId = req.params.postid
+
     con.connect((err) => {
         if (err) return err;
         console.log("connected succes");
         const sql =
-            `UPDATE  todos 
-           SET completed = '${status}'
-           WHERE id = '${todoId}'
-               `;
-     
+            `SELECT *
+            FROM comments 
+             WHERE postId = '${postId}' `;
+
         con.query(sql, (err, result) => {
             if (err) { console.log('bad authentication'); return res.send(JSON.stringify(err)); }
-    console.log(result.affectedRows);
+            // const a = result[0] ? 'true' : 'false'
+            // console.log(a);
             res.send(JSON.stringify(result))
         })
     })
     console.log('check3');
 })
+
+//post new comment
+app.post('/comments/:postid', (req, res) => {
+    const  postId  = req.params
+    const {bodyComment, name} = req.body
+    console.log(req.body);
+    con.connect((err) => {
+        if (err) return err;
+
+        console.log("connected succes");
+
+        const sql =
+        `INSERT INTO comments(postId, name, body ) 
+        VALUES (${postId},${name}, ${bodyComment});`;
+
+        con.query(sql, (err, result) => {
+            if (err) { console.log('bad authentication'); return res.send(JSON.stringify(err)); }
+            console.log(result.affectedRows);
+            res.send(JSON.stringify(result))
+        })
+    })
+
+})
+
+//delete comment
+app.delete('/delete_comment/:commentId', (req, res) => {
+    const  commentId  = req.params
+    const {bodyComment, name} = req.body
+    console.log(req.body);
+    con.connect((err) => {
+        if (err) return err;
+        console.log("connected succes");
+
+        const sql =
+        `DELETE FROM comments WHERE id = ${commentId};`;
+        con.query(sql, (err, result) => {
+            if (err) { console.log('bad authentication'); return res.send(JSON.stringify(err)); }
+            console.log(result.affectedRows);
+            res.send(JSON.stringify(result))
+        })
+    })
+
+})
+
+
+//update un/completed
+
+//#### dont forget to change from post to put in the react ###
+
+app.put('/todos/completed', (req, res) => {
+    const { todoId, status } = req.body
+    console.log(req.body);
+    con.connect((err) => {
+        if (err) return err;
+        console.log("connected succes");
+        
+        const sql =
+        `UPDATE  todos 
+        SET completed = '${status}'
+        WHERE id = '${todoId}'`;
+
+        con.query(sql, (err, result) => {
+            if (err) { console.log('bad authentication'); return res.send(JSON.stringify(err)); }
+            console.log(result.affectedRows);
+            res.send(JSON.stringify(result))
+        })
+    })
+
+})
+
 const port = 5000
 app.listen(port, () => console.log(`listening on port ${port}`))
 
